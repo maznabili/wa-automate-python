@@ -36,7 +36,7 @@ from .objects.message import MessageGroup, factory_message
 from .objects.number_status import NumberStatus
 from .wapi_js_wrapper import WapiJsWrapper
 
-__version__ = '1.1.0'
+__version__ = '1.2.1'
 
 
 class WhatsAPIDriverStatus(object):
@@ -72,30 +72,10 @@ class WhatsAPIDriver(object):
     _LOCAL_STORAGE_FILE = 'localStorage.json'
 
     _SELECTORS = {
-        'firstrun': "#wrapper",
         'qrCode': "canvas[aria-label=\"Scan me!\"]",
         'qrCodePlain': "div[data-ref]",
         'QRReloader': 'div[data-ref] > span > div',
-        'mainPage': ".app.two",
-        'chatList': ".infinite-list-viewport",
-        'messageList': "#main > div > div:nth-child(1) > div > div.message-list",
-        'unreadMessageBar': "#main > div > div:nth-child(1) > div > div.message-list > div.msg-unread",
-        'searchBar': ".input",
-        'searchCancel': ".icon-search-morph",
-        'chats': ".infinite-list-item",
-        'chatBar': 'div.input',
-        'sendButton': 'button.icon:nth-child(3)',
-        'LoadHistory': '.btn-more',
-        'UnreadBadge': '.icon-meta',
-        'UnreadChatBanner': '.message-list',
-        'ReconnectLink': '.action',
-        'WhatsappQrIcon': 'span.icon:nth-child(2)',
-    }
-
-    _CLASSES = {
-        'unreadBadge': 'icon-meta',
-        'messageContent': "message-text",
-        'messageList': "msg"
+        'mainPage': ".two",
     }
 
     logger = logging.getLogger(__name__)
@@ -345,6 +325,12 @@ class WhatsAPIDriver(object):
         """
         return self.wapi_functions.setPresence(present)
 
+    def set_profile_status(self, status):
+        return self.wapi_functions.setMyStatus(status)
+
+    def set_profile_name(self, name):
+        return self.wapi_functions.setMyName(name)
+
     #################
     # QR
     #################
@@ -474,6 +460,13 @@ class WhatsAPIDriver(object):
         my_contacts = self.wapi_functions.getMyContacts()
         return [Contact(contact, self) for contact in my_contacts]
 
+    def get_all_groups(self):
+        chats = self.wapi_functions.getAllGroups()
+        if chats:
+            return [factory_chat(chat, self) for chat in chats]
+        else:
+            return []
+
     def get_all_chats(self):
         """
         Fetches all chats
@@ -521,32 +514,9 @@ class WhatsAPIDriver(object):
         return self.wapi_functions.areAllMessagesLoaded(chat_id)
 
     def get_profile_pic_from_id(self, id):
-        """
-        Get full profile pic from an id
-        The ID must be on your contact book to
-        successfully get their profile picture.
-
-        :param id: ID
-        :type id: str
-        """
-        profile_pic = self.wapi_functions.getProfilePicFromId(id)
-        if profile_pic:
-            return b64decode(profile_pic)
-        else:
-            return False
-
-    def get_profile_pic_small_from_id(self, id):
-        """
-        Get small profile pic from an id
-        The ID must be on your contact book to
-        successfully get their profile picture.
-
-        :param id: ID
-        :type id: str
-        """
-        profile_pic_small = self.wapi_functions.getProfilePicSmallFromId(id)
-        if profile_pic_small:
-            return b64decode(profile_pic_small)
+        profile_pic_url = self.wapi_functions.getProfilePicFromServer(id)
+        if profile_pic_url:
+            return requests.get(profile_pic_url).content
         else:
             return False
 
@@ -765,6 +735,9 @@ class WhatsAPIDriver(object):
         """
         imgBase64 = convert_to_base64(path, is_thumbnail=True)
         return self.wapi_functions.sendMessageWithThumb(imgBase64, url, title, description, chatid)
+
+    def send_message_with_auto_preview(self, chat_id, url, text):
+        return self.wapi_functions.sendLinkWithAutoPreview(chat_id, url, text)
 
     def delete_message(self, chat_id, message_array, revoke=False):
         """

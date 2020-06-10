@@ -12,7 +12,7 @@ if (!window.Store || !window.Store.Msg) {
     function getStore(modules) {
       let foundCount = 0;
       let neededObjects = [
-        {id: "Store", conditions: (module) => (module.Chat && module.Msg) ? module : null},
+        { id: "Store", conditions: (module) => (module.default && module.default.Chat && module.default.Msg) ? module.default : null},
         {
           id: "MediaCollection",
           conditions: (module) => (module.default && module.default.prototype && (module.default.prototype.processFiles !== undefined || module.default.prototype.processAttachments !== undefined)) ? module.default : null
@@ -100,7 +100,7 @@ if (!window.Store || !window.Store.Msg) {
         },
         {
           id: "WidFactory",
-          conditions: (module) => (module.numberToWid && module.createWid && module.createWidFromWidLike) ? module : null
+          conditions: (module) => (module.isWidlike && module.createWid && module.createWidFromWidLike) ? module : null
         },
         {
           id: "Base",
@@ -201,6 +201,7 @@ window.WAPI._serializeChatObj = (obj) => {
     return null;
   }
   return Object.assign(window.WAPI._serializeRawObj(obj), {
+    id: obj.id._serialized,
     kind: obj.kind,
     isGroup: obj.isGroup,
     formattedTitle: obj.formattedTitle,
@@ -216,6 +217,7 @@ window.WAPI._serializeContactObj = (obj) => {
     return null;
   }
   return Object.assign(window.WAPI._serializeRawObj(obj), {
+    id: obj.id._serialized,
     formattedName: obj.formattedName,
     isHighLevelVerified: obj.isHighLevelVerified,
     isMe: obj.isMe,
@@ -709,13 +711,13 @@ window.WAPI._getGroupParticipants = async function (id) {
  */
 window.WAPI.getGroupParticipantIDs = async function (id) {
   return (await WAPI._getGroupParticipants(id))
-    .map((participant) => participant.id);
+    .map((participant) => participant.id._serialized);
 };
 
 window.WAPI.getGroupAdmins = async function (id) {
   return (await WAPI._getGroupParticipants(id))
     .filter((participant) => participant.isAdmin)
-    .map((admin) => admin.id);
+    .map((admin) => admin.id._serialized);
 };
 
 /**
@@ -1607,8 +1609,8 @@ window.WAPI.sendImage = async function (imgBase64, chatid, filename, caption, qu
  * @param newName - string the new name to set as profile name
  */
 window.WAPI.setMyName = async function (newName) {
-  if (!Store.Versions.default[11].BinaryProtocol) Store.Versions.default[11].BinaryProtocol = new Store.bp(11);
-  return await Store.Versions.default[11].setPushname(newName);
+  if (!Store.Base.BinaryProtocol) Store.Base.setSubProtocol(11);
+  return await Store.Base.setPushname(newName);
 }
 
 /** Change the icon for the group chat
