@@ -31,7 +31,7 @@ def print_and_log(text):
 def send_message_to_master(message):
 		phone_safe = masters_number # Phone number with country code
 		phone_whatsapp = "{}@c.us".format(phone_safe) # WhatsApp Chat ID
-		driver.send_message(phone_whatsapp,message)
+		driver.chat_send_message(phone_whatsapp,message)
 	
 def process_command(command):
 	print_and_log("Processing command: {cmd}".format(cmd=command))
@@ -51,7 +51,9 @@ def process_command(command):
 driver = WhatsAPIDriver()
 print("Waiting for QR")
 
-driver.wait_for_login()
+while not driver.wait_for_login():
+    time.sleep(3)
+
 print("Bot started")
 start_time = datetime.datetime.now()
 
