@@ -36,7 +36,7 @@ from .objects.message import MessageGroup, factory_message
 from .objects.number_status import NumberStatus
 from .wapi_js_wrapper import WapiJsWrapper
 
-__version__ = '1.3.10'
+__version__ = '1.3.11'
 
 
 class WhatsAPIDriverStatus(object):
@@ -730,7 +730,7 @@ class WhatsAPIDriver(object):
     def send_location(self, chat_id, lat, long, text):
         return self.wapi_functions.sendLocation(chat_id, lat, long, text)
 
-    def send_message_with_thumbnail(self, path, chatid, url, title, description):
+    def send_message_with_thumbnail(self, path, chatid, url, title, description, text):
         """
             converts the file to base64 and sends it using the sendImage function of wapi.js
         :param path: image file path
@@ -741,7 +741,7 @@ class WhatsAPIDriver(object):
         :return:
         """
         imgBase64 = convert_to_base64(path, is_thumbnail=True)
-        return self.wapi_functions.sendMessageWithThumb(imgBase64, url, title, description, chatid)
+        return self.wapi_functions.sendMessageWithThumb(imgBase64, url, title, description, text, chatid)
 
     def send_message_with_auto_preview(self, chat_id, url, text):
         return self.wapi_functions.sendLinkWithAutoPreview(chat_id, url, text)
